@@ -1,6 +1,8 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI News Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
@@ -10,50 +12,83 @@
             font-family: 'Roboto', sans-serif;
             transition: background-color 0.3s, color 0.3s;
         }
+
         .dark-mode {
             background-color: #1a202c;
             color: #cbd5e0;
         }
+
         .dark-mode .bg-white {
             background-color: #2d3748;
         }
+
         .dark-mode .text-black {
             color: #cbd5e0;
         }
+
         .dark-mode .bg-gray-100 {
             background-color: #2d3748;
         }
+
         .dark-mode .bg-blue-500 {
             background-color: #3182ce;
         }
+
         .dark-mode .hover\:bg-blue-700:hover {
             background-color: #2b6cb0;
         }
+
         .dark-mode .dark-mode-toggle {
             background-color: #4a5568;
             color: #cbd5e0;
         }
+
         .dark-mode .dark-mode-toggle:hover {
             background-color: #2d3748;
         }
+
         .dark-mode .container {
             background-color: #2d3748;
         }
     </style>
 </head>
 <body>
-    <div class="container mx-auto p-4">
+    <div class="container mx-auto p-4 max-w-[640px]">
         <h1 class="text-3xl font-bold text-center text-red-500 mb-4">AI News Reporter</h1>
-        <div class="controls flex flex-col sm:flex-row justify-center items-center mb-4 space-y-2 sm:space-y-0 sm:space-x-2">
-            <input type="text" id="newsType" placeholder="Enter news topic (e.g., sports, technology)" class="p-2 border border-gray-300 rounded w-full sm:w-64">
-            <button onclick="getNews()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-300 w-full sm:w-auto">Generate News</button>
-            <button onclick="clearNews()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-300 w-full sm:w-auto">Clear News</button>
-            <button onclick="toggleDarkMode()" class="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400 transition duration-300 dark-mode-toggle w-full sm:w-auto">
+
+        <!-- Controls -->
+        <div class="controls flex flex-col sm:flex-row justify-center items-center gap-2">
+            <input 
+                type="text" 
+                id="newsType" 
+                placeholder="Enter news topic (e.g., sports, technology)" 
+                class="p-2 border border-gray-300 rounded w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+            <button 
+                onclick="getNews()" 
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-300 w-full sm:w-auto"
+            >
+                Generate News
+            </button>
+            <button 
+                onclick="clearNews()" 
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-300 w-full sm:w-auto"
+            >
+                Clear News
+            </button>
+            <button 
+                onclick="toggleDarkMode()" 
+                class="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400 transition duration-300 dark-mode-toggle w-full sm:w-auto"
+            >
                 <i class="fas fa-moon"></i>
             </button>
         </div>
-        <div id="result" class="mt-4 bg-white p-4 rounded shadow-md"></div>
-        <div id="loading" class="loading text-center text-blue-500 text-lg" style="display: none;">Loading...</div>
+
+        <!-- Result -->
+        <div id="result" class="mt-4 bg-white p-4 rounded shadow-md overflow-x-auto"></div>
+        <div id="loading" class="loading text-center text-blue-500 text-lg mt-2 hidden">
+            Loading...
+        </div>
     </div>
     
     <script>
@@ -61,45 +96,55 @@
 
         async function getNews() {
             const newsType = document.getElementById('newsType').value || "general";
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('result').innerHTML = ''; // Clear previous results
+            const resultContainer = document.getElementById('result');
+            const loading = document.getElementById('loading');
 
-            const response = await fetch(
-                "https://api.groq.com/openai/v1/chat/completions",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: "Bearer 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" ,
-                    },
-                    body: JSON.stringify({
-                        model: "llama-3.3-70b-versatile",
-                        messages: [
-                            {
-                                role: "user",
-                                content: `Generate a news article about ${newsType} only in div tag with good css`,
-                            },
-                        ],
-                    }),
+            loading.style.display = 'block';
+            resultContainer.innerHTML = ''; // Clear previous results
+
+            try {
+                const response = await fetch(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: "Bearer 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" ,
+                        },
+                        body: JSON.stringify({
+                            model: "llama-3.3-70b-versatile",
+                            messages: [
+                                {
+                                    role: "user",
+                                    content: `Generate a news article about ${newsType} only in div tag with good css`,
+                                },
+                            ],
+                        }),
+                    }
+                );
+
+                loading.style.display = 'none';
+
+                if (!response.ok) {
+                    const errorBody = await response.json();
+                    console.error("Error:", errorBody.error.message);
+                    alert("Failed to fetch news: " + errorBody.error.message);
+                    return;
                 }
-            );
 
-            document.getElementById('loading').style.display = 'none';
+                const body = await response.json();
+                const newsContent = body.choices[0].message.content;
 
-            if (!response.ok) {
-                const errorBody = await response.json();
-                console.error("Error:", errorBody.error.message);
-                alert("Failed to fetch news: " + errorBody.error.message);
-                return;
+                let newDiv = document.createElement('div');
+                newDiv.className = 'news-item mb-4 p-4 border-l-4 border-blue-500 bg-gray-100 rounded';
+                newDiv.innerHTML = newsContent;
+                resultContainer.appendChild(newDiv);
+
+            } catch (error) {
+                loading.style.display = 'none';
+                console.error("Error:", error);
+                alert("Failed to fetch news.");
             }
-
-            const body = await response.json();
-            const newsContent = body.choices[0].message.content;
-
-            let newDiv = document.createElement('div');
-            newDiv.className = 'news-item mb-4 p-4 border-l-4 border-blue-500 bg-gray-100';
-            newDiv.innerHTML = newsContent;
-            document.getElementById('result').appendChild(newDiv);
         }
 
         function clearNews() {
